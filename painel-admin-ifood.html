@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iFoodBot · Painel Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0f;--surface:#13131a;--border:#1e1e2e;--accent:#00e5a0;--danger:#ff4757;--warn:#ffa502;--text:#e8e8f0;--muted:#6b6b8a;--card:#16161f}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:24px 20px}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:24px}
+.logo{font-size:18px;font-weight:800}.logo span{color:var(--accent)}
+.badge{font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(0,229,160,.12);color:var(--accent);border:1px solid rgba(0,229,160,.3);padding:4px 10px;border-radius:20px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--accent))}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;font-weight:600}
+.stat-val{font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.section{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden}
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.section-title{font-size:14px;font-weight:700;letter-spacing:.5px}
+.btn{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}.btn-primary:hover{background:#00ffb3}
+.btn-sm{padding:6px 13px;font-size:11px;border-radius:6px}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-warn{background:transparent;color:var(--warn);border:1px solid var(--warn)}.btn-warn:hover{background:var(--warn);color:#000}
+.btn-success{background:transparent;color:var(--accent);border:1px solid var(--accent)}.btn-success:hover{background:var(--accent);color:#000}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text);border-color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);padding:10px 20px;text-align:left;border-bottom:1px solid var(--border);font-weight:600}
+td{padding:13px 20px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04)}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.02)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.pill-green{background:rgba(0,229,160,.12);color:var(--accent);border:1px solid rgba(0,229,160,.25)}
+.pill-red{background:rgba(255,71,87,.12);color:var(--danger);border:1px solid rgba(255,71,87,.25)}
+.pill-warn{background:rgba(255,165,2,.12);color:var(--warn);border:1px solid rgba(255,165,2,.25)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:460px;transform:translateY(12px);transition:transform .25s;margin:20px}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-size:20px;font-weight:800;margin-bottom:22px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:7px;font-weight:600}
+.field input,.field select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 13px;border-radius:8px;font-size:13px;font-family:'Syne',sans-serif;outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field select option{background:var(--bg)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px}
+@media(max-width:600px){.config-grid{grid-template-columns:1fr}}
+.config-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px}
+.config-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;font-weight:600}
+.config-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);word-break:break-all}
+.copy-btn{display:inline-block;margin-left:8px;cursor:pointer;color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border);padding:2px 8px;border-radius:4px;transition:all .15s;user-select:none}
+.copy-btn:hover{color:var(--accent);border-color:var(--accent)}
+.toast{position:fixed;bottom:28px;right:28px;z-index:200;background:var(--accent);color:#000;font-weight:700;font-size:13px;padding:13px 22px;border-radius:10px;transform:translateY(70px);opacity:0;transition:all .3s}
+.toast.show{transform:translateY(0);opacity:1}
+.empty{padding:48px;text-align:center;color:var(--muted);font-size:13px;line-height:1.8}
+.empty strong{display:block;font-size:16px;margin-bottom:8px;color:var(--text)}
+.search-input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 13px;border-radius:8px;font-size:12px;font-family:'Syne',sans-serif;outline:none;width:200px;transition:border-color .15s}
+.search-input:focus{border-color:var(--accent)}
+.step{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start;padding:0 20px}
+.step-num{min-width:26px;height:26px;border-radius:50%;background:rgba(0,229,160,.15);border:1px solid rgba(0,229,160,.3);color:var(--accent);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace}
+.step-text{font-size:13px;line-height:1.7;color:var(--muted)}
+.step-text strong{color:var(--text)}.step-text a{color:var(--accent);text-decoration:none}
+.sql-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:#a0e0c0;white-space:pre;overflow-x:auto;margin:0 20px 20px}
+.erro-box{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.3);border-radius:8px;padding:12px 16px;margin:12px 20px;font-size:12px;color:var(--danger);display:none}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="wrap">
+
+<header>
+  <div class="logo"><span>iFood</span>Bot · Painel Admin</div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <span class="badge" id="status-badge">SEM CONEXÃO</span>
+    <button class="btn btn-primary btn-sm" onclick="openModal()">+ Nova Licença</button>
+  </div>
+</header>
+
+<div class="stats" id="stats"></div>
+
+<!-- Config -->
+<div class="section">
+  <div class="section-head">
+    <span class="section-title">⚙ Configuração Supabase</span>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="toggleSteps()">Como configurar?</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleConfig()">Editar credenciais</button>
+    </div>
+  </div>
+
+  <div id="steps" style="display:none;padding-top:16px">
+    <div class="step"><div class="step-num">1</div><div class="step-text">Acesse <a href="https://supabase.com" target="_blank">supabase.com</a>, crie conta e clique em <strong>New Project</strong>.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">No menu esquerdo clique em <strong>SQL Editor</strong>, cole o SQL abaixo e clique em <strong>Run</strong>.</div></div>
+    <div class="sql-box">CREATE TABLE IF NOT EXISTS licencas (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nome TEXT NOT NULL,
+  email TEXT NOT NULL,
+  chave TEXT UNIQUE NOT NULL,
+  plano TEXT DEFAULT 'mensal',
+  ativo BOOLEAN DEFAULT true,
+  criado TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE licencas ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "leitura_publica" ON licencas FOR SELECT USING (true);
+CREATE POLICY "admin_tudo" ON licencas FOR ALL USING (true);</div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Vá em <strong>Settings → API Keys</strong>, copie a <strong>Project URL</strong>, a <strong>Publishable key</strong> (anon) e a <strong>Secret key</strong> (service role).</div></div>
+    <div class="step" style="margin-bottom:20px"><div class="step-num">4</div><div class="step-text">Cole as chaves no campo <strong>Editar credenciais</strong> abaixo e clique em Salvar.</div></div>
+  </div>
+
+  <div class="config-grid" id="config-display">
+    <div class="config-item"><div class="config-label">Supabase URL</div><div class="config-val" id="disp-url">Não configurado</div></div>
+    <div class="config-item"><div class="config-label">Service Role Key</div><div class="config-val" id="disp-key">Não configurado</div></div>
+    <div class="config-item" style="grid-column:1/-1">
+      <div class="config-label">Código Python para o bot <span class="copy-btn" id="copy-code-btn" onclick="copyCode()" style="display:none">copiar</span></div>
+      <div id="disp-code" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:#a0e0c0;white-space:pre;overflow-x:auto;margin-top:8px">Configure as credenciais para gerar o código</div>
+    </div>
+  </div>
+
+  <div id="config-form" style="display:none;padding:20px">
+    <div class="field"><label>Supabase URL</label><input id="inp-url" placeholder="https://xxxx.supabase.co"/></div>
+    <div class="field"><label>Secret Key — service role (para o painel)</label><input id="inp-key" placeholder="sb_secret_..."/></div>
+    <div class="field"><label>Publishable Key — anon (para o bot Python)</label><input id="inp-anon" placeholder="sb_publishable_..."/></div>
+    <div class="erro-box" id="erro-config"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="toggleConfig()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveConfig()">Salvar e testar conexão</button>
+    </div>
+  </div>
+</div>
+
+<!-- Licenças -->
+<div class="section">
+  <div class="section-head">
+    <span class="section-title">Licenças</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input class="search-input" id="search" placeholder="Buscar..." oninput="renderTabela()">
+      <button class="btn btn-ghost btn-sm" onclick="carregarLicencas()">↺ Atualizar</button>
+    </div>
+  </div>
+  <div id="table-wrap"><div class="empty"><strong>Nenhuma licença ainda</strong>Configure o Supabase acima ou clique em "+ Nova Licença"</div></div>
+</div>
+</div>
+
+<!-- Modal nova licença -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Nova Licença</div>
+    <div class="field"><label>Nome do cliente</label><input id="inp-nome" placeholder="Ex: Restaurante do João"/></div>
+    <div class="field"><label>Email</label><input id="inp-email" type="email" placeholder="joao@email.com"/></div>
+    <div class="field"><label>Plano</label>
+      <select id="inp-plano">
+        <option value="mensal">Mensal (30 dias)</option>
+        <option value="trimestral">Trimestral (90 dias)</option>
+        <option value="anual">Anual (365 dias)</option>
+        <option value="vitalicio">Vitalício</option>
+      </select>
+    </div>
+    <div class="field"><label>Chave personalizada (opcional)</label><input id="inp-chave" placeholder="Deixe vazio para gerar automaticamente"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarLicenca()">Criar Licença</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmar -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title" id="confirm-title">Confirmar</div>
+    <div id="confirm-msg" style="color:var(--muted);font-size:13px;line-height:1.7"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" id="btn-confirm-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let licencas = [];
+let config = JSON.parse(localStorage.getItem('ifb_config') || '{}');
+let confirmCallback = null;
+
+// ── Fetch direto na API REST do Supabase (sem SDK externo) ────────────
+async function sbReq(path, method='GET', body=null) {
+  if (!config.url || !config.key) return { data: null, error: 'Sem configuração' };
+  const url = config.url.replace(/\/$/, '') + '/rest/v1/' + path;
+  try {
+    const opts = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'apikey': config.key,
+        'Authorization': 'Bearer ' + config.key,
+        'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+      }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(url, opts);
+    const txt = await res.text();
+    const data = txt ? JSON.parse(txt) : null;
+    if (!res.ok) return { data: null, error: data?.message || data?.hint || ('HTTP ' + res.status) };
+    return { data, error: null };
+  } catch(e) {
+    return { data: null, error: e.message };
+  }
+}
+
+// ── CRUD ──────────────────────────────────────────────────────────────
+async function carregarLicencas() {
+  updateStats(); updateConfigDisplay();
+  if (!config.url) {
+    licencas = JSON.parse(localStorage.getItem('ifb_licencas') || '[]');
+    renderTabela(); return;
+  }
+  toast('Carregando...');
+  const { data, error } = await sbReq('licencas?select=*&order=criado.desc');
+  if (error) {
+    toast('Erro: ' + error);
+    document.getElementById('status-badge').textContent = 'ERRO';
+    licencas = JSON.parse(localStorage.getItem('ifb_licencas') || '[]');
+  } else {
+    licencas = Array.isArray(data) ? data : [];
+    localStorage.setItem('ifb_licencas', JSON.stringify(licencas));
+    document.getElementById('status-badge').textContent = 'CONECTADO';
+    toast('Conectado! ' + licencas.length + ' licenças.');
+  }
+  renderTabela();
+}
+
+async function salvarLicenca() {
+  const nome = document.getElementById('inp-nome').value.trim();
+  const email = document.getElementById('inp-email').value.trim();
+  const plano = document.getElementById('inp-plano').value;
+  const chave = document.getElementById('inp-chave').value.trim() || gerarChave();
+  if (!nome || !email) { toast('Preencha nome e email'); return; }
+  const novo = { nome, email, plano, chave, ativo: true, criado: new Date().toISOString() };
+  if (config.url) {
+    const { data, error } = await sbReq('licencas', 'POST', novo);
+    if (error) { toast('Erro: ' + error); return; }
+    licencas.unshift(Array.isArray(data) ? data[0] : (data || {...novo, id: Date.now().toString()}));
+  } else {
+    novo.id = Date.now().toString();
+    licencas.unshift(novo);
+  }
+  localStorage.setItem('ifb_licencas', JSON.stringify(licencas));
+  closeModal(); renderTabela(); toast('Licença criada! Chave: ' + chave);
+}
+
+async function setAtivo(id, val) {
+  if (config.url) {
+    const { error } = await sbReq('licencas?id=eq.' + id, 'PATCH', { ativo: val });
+    if (error) { toast('Erro: ' + error); return; }
+  }
+  licencas = licencas.map(l => l.id === id ? {...l, ativo: val} : l);
+  localStorage.setItem('ifb_licencas', JSON.stringify(licencas));
+  renderTabela(); toast(val ? 'Licença ativada' : 'Licença bloqueada');
+}
+
+async function renovar(id) {
+  const criado = new Date().toISOString();
+  if (config.url) {
+    const { error } = await sbReq('licencas?id=eq.' + id, 'PATCH', { criado, ativo: true });
+    if (error) { toast('Erro: ' + error); return; }
+  }
+  licencas = licencas.map(l => l.id === id ? {...l, criado, ativo: true} : l);
+  localStorage.setItem('ifb_licencas', JSON.stringify(licencas));
+  renderTabela(); toast('Licença renovada a partir de hoje');
+}
+
+function excluir(id) {
+  const l = licencas.find(x => x.id === id);
+  confirm2('Excluir licença?', `Remover licença de <strong>${esc(l?.nome||'')}</strong>?`, async () => {
+    if (config.url) {
+      const { error } = await sbReq('licencas?id=eq.' + id, 'DELETE');
+      if (error) { toast('Erro: ' + error); return; }
+    }
+    licencas = licencas.filter(x => x.id !== id);
+    localStorage.setItem('ifb_licencas', JSON.stringify(licencas));
+    renderTabela(); toast('Licença excluída');
+  });
+}
+
+// ── Utilitários ───────────────────────────────────────────────────────
+function gerarChave() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return [4,4,4].map(n => Array.from({length:n}, () => c[Math.random()*c.length|0]).join('')).join('-');
+}
+function diasPlano(p) { return {mensal:30,trimestral:90,anual:365,vitalicio:99999}[p]||30; }
+function expiracaoStr(l) {
+  if (l.plano==='vitalicio') return 'Vitalício';
+  const d = new Date(l.criado); d.setDate(d.getDate()+diasPlano(l.plano));
+  return d.toLocaleDateString('pt-BR');
+}
+function diasRestantes(l) {
+  if (l.plano==='vitalicio') return 9999;
+  const exp = new Date(l.criado); exp.setDate(exp.getDate()+diasPlano(l.plano));
+  return Math.ceil((exp-new Date())/(1000*60*60*24));
+}
+function getStatus(l) {
+  if (!l.ativo) return {label:'Bloqueado',cls:'pill-red'};
+  const d = diasRestantes(l);
+  if (d<=0) return {label:'Expirado',cls:'pill-red'};
+  if (d<=7) return {label:d+'d restantes',cls:'pill-warn'};
+  return {label:'Ativo',cls:'pill-green'};
+}
+function esc(s) { return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ── Render ────────────────────────────────────────────────────────────
+function updateStats() {
+  const ativos = licencas.filter(l=>l.ativo&&diasRestantes(l)>0).length;
+  const inativos = licencas.filter(l=>!l.ativo||diasRestantes(l)<=0).length;
+  const alerta = licencas.filter(l=>l.ativo&&diasRestantes(l)>0&&diasRestantes(l)<=7).length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-val">${licencas.length}</div><div class="stat-sub">licenças</div></div>
+    <div class="stat" style="--ac:var(--accent)"><div class="stat-label">Ativos</div><div class="stat-val" style="color:var(--accent)">${ativos}</div><div class="stat-sub">usando agora</div></div>
+    <div class="stat" style="--ac:var(--warn)"><div class="stat-label">Expiram em breve</div><div class="stat-val" style="color:var(--warn)">${alerta}</div><div class="stat-sub">próximos 7 dias</div></div>
+    <div class="stat" style="--ac:var(--danger)"><div class="stat-label">Inativos</div><div class="stat-val" style="color:var(--danger)">${inativos}</div><div class="stat-sub">expirados/bloqueados</div></div>`;
+}
+
+function renderTabela() {
+  updateStats();
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const lista = licencas.filter(l=>l.nome.toLowerCase().includes(q)||l.email.toLowerCase().includes(q)||l.chave.toLowerCase().includes(q));
+  if (!lista.length) {
+    document.getElementById('table-wrap').innerHTML = '<div class="empty"><strong>Nenhuma licença encontrada</strong>Clique em "+ Nova Licença" para começar</div>';
+    return;
+  }
+  document.getElementById('table-wrap').innerHTML = `<div style="overflow-x:auto"><table>
+    <thead><tr><th>Cliente</th><th>Chave</th><th>Plano</th><th>Expira</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody>${lista.map(l=>{const s=getStatus(l);return`<tr>
+      <td><div style="font-weight:700">${esc(l.nome)}</div><div style="color:var(--muted);font-size:11px">${esc(l.email)}</div></td>
+      <td><span class="mono" style="color:var(--accent)">${esc(l.chave)}</span><span class="copy-btn" onclick="copiar('${esc(l.chave)}')">copiar</span></td>
+      <td style="font-size:12px;text-transform:capitalize">${l.plano}</td>
+      <td style="font-size:12px;color:var(--muted)">${expiracaoStr(l)}</td>
+      <td><span class="pill ${s.cls}">${s.label}</span></td>
+      <td><div class="actions">
+        ${l.ativo?`<button class="btn btn-sm btn-danger" onclick="setAtivo('${l.id}',false)">Bloquear</button>`:`<button class="btn btn-sm btn-success" onclick="setAtivo('${l.id}',true)">Ativar</button>`}
+        <button class="btn btn-sm btn-warn" onclick="renovar('${l.id}')">Renovar</button>
+        <button class="btn btn-sm btn-ghost" onclick="excluir('${l.id}')">✕</button>
+      </div></td>
+    </tr>`;}).join('')}</tbody>
+  </table></div>`;
+}
+
+function updateConfigDisplay() {
+  document.getElementById('disp-url').textContent = config.url||'Não configurado';
+  document.getElementById('disp-key').textContent = config.key ? config.key.substring(0,24)+'...' : 'Não configurado';
+  const anon = config.anon||config.key||'';
+  if (config.url && anon) {
+    const u = config.url.replace(/\/$/,'');
+    document.getElementById('disp-code').textContent =
+`import requests
+from datetime import datetime, timedelta
+
+SUPABASE_URL = "${u}"
+SUPABASE_KEY = "${anon}"
+
+def verificar_licenca(chave: str) -> bool:
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Accept": "application/json"
+    }
+    r = requests.get(
+        f"{u}/rest/v1/licencas?chave=eq.{'{chave}'}&select=ativo,plano,criado",
+        headers=headers
+    )
+    dados = r.json()
+    if not dados:
+        print("Chave nao encontrada.")
+        return False
+    item = dados[0]
+    if not item["ativo"]:
+        print("Licenca bloqueada.")
+        return False
+    if item["plano"] != "vitalicio":
+        dias = {"mensal":30,"trimestral":90,"anual":365}
+        criado = datetime.fromisoformat(item["criado"].replace("Z",""))
+        if datetime.now() > criado + timedelta(days=dias.get(item["plano"],30)):
+            print("Licenca expirada.")
+            return False
+    return True
+
+chave = input("Digite sua chave de acesso: ")
+if not verificar_licenca(chave):
+    input("Pressione Enter para sair...")
+    exit()
+print("Licenca OK! Iniciando bot...")`;
+    document.getElementById('copy-code-btn').style.display='inline-block';
+  }
+}
+
+// ── Config ────────────────────────────────────────────────────────────
+function toggleConfig() {
+  const f=document.getElementById('config-form'), d=document.getElementById('config-display');
+  const show = f.style.display!=='none';
+  f.style.display=show?'none':'block'; d.style.display=show?'grid':'none';
+  if (!show) { document.getElementById('inp-url').value=config.url||''; document.getElementById('inp-key').value=config.key||''; document.getElementById('inp-anon').value=config.anon||''; }
+}
+function toggleSteps() { const e=document.getElementById('steps'); e.style.display=e.style.display==='block'?'none':'block'; }
+
+async function saveConfig() {
+  const url = document.getElementById('inp-url').value.trim();
+  const key = document.getElementById('inp-key').value.trim();
+  const anon = document.getElementById('inp-anon').value.trim();
+  if (!url || !key) { showErro('Preencha URL e Secret Key'); return; }
+  config = { url, key, anon };
+  localStorage.setItem('ifb_config', JSON.stringify(config));
+  // Testa a conexão
+  toast('Testando conexão...');
+  const { data, error } = await sbReq('licencas?select=id&limit=1');
+  if (error) {
+    showErro('Erro ao conectar: ' + error + '. Verifique a URL e a chave.');
+    return;
+  }
+  document.getElementById('erro-config').style.display='none';
+  toggleConfig();
+  carregarLicencas();
+  toast('Conectado com sucesso!');
+}
+
+function showErro(msg) {
+  const el = document.getElementById('erro-config');
+  el.style.display='block'; el.textContent=msg;
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────
+function openModal() {
+  ['inp-nome','inp-email','inp-chave'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('inp-plano').value='mensal';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('inp-nome').focus(),200);
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function confirm2(t,m,cb) {
+  document.getElementById('confirm-title').textContent=t;
+  document.getElementById('confirm-msg').innerHTML=m;
+  confirmCallback=cb; document.getElementById('modal-confirm').classList.add('open');
+}
+function closeConfirm() { document.getElementById('modal-confirm').classList.remove('open'); }
+document.getElementById('btn-confirm-ok').onclick=()=>{ closeConfirm(); if(confirmCallback) confirmCallback(); };
+['modal','modal-confirm'].forEach(id=>{ document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}); });
+
+function copiar(txt) { navigator.clipboard.writeText(txt).then(()=>toast('Copiado!')); }
+function copyCode() { navigator.clipboard.writeText(document.getElementById('disp-code').textContent).then(()=>toast('Código copiado!')); }
+
+let toastTimer;
+function toast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+updateConfigDisplay();
+carregarLicencas();
+</script>
+</body>
+</html>
